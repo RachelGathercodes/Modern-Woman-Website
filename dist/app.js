@@ -1,0 +1,18 @@
+'use strict';
+const data = window.MODERN_WOMAN;
+const el = (tag, text, className) => { const node = document.createElement(tag); if (text) node.textContent = text; if (className) node.className = className; return node; };
+const safeURL = value => { try { const u = new URL(value); return u.protocol === 'https:' ? u.href : null; } catch { return null; } };
+const menu = document.querySelector('.menu');
+const nav = document.querySelector('#nav');
+function closeMenu() { nav.classList.remove('open'); menu.setAttribute('aria-expanded', 'false'); menu.textContent = 'Menu +'; }
+menu.addEventListener('click', () => { const open = nav.classList.toggle('open'); menu.setAttribute('aria-expanded', String(open)); menu.textContent = open ? 'Close −' : 'Menu +'; });
+nav.addEventListener('click', e => { if (e.target.closest('a')) closeMenu(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && nav.classList.contains('open')) { closeMenu(); menu.focus(); } });
+for (const [i, member] of data.members.entries()) { const card = el('article', null, 'member'); card.append(el('span', String(i + 1).padStart(2, '0'), 'member-number'), el('h4', member.name), el('p', member.instruments)); document.querySelector('#lineup').append(card); }
+for (const show of data.shows) { const row = el('article', null, 'show-row'); const time = el('time', new Date(show.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })); time.dateTime = show.date; row.append(time, el('strong', show.venue), el('span', show.city)); const href = safeURL(show.tickets); if (href) { const a = el('a', 'Tickets ↗', 'text-link'); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; row.append(a); } document.querySelector('#show-list').append(row); }
+if (data.shows.length) document.querySelector('#show-empty').hidden = true;
+if (data.bookingEmail) { const a = el('a', data.bookingEmail); a.href = 'mailto:' + data.bookingEmail; document.querySelector('#booking-contact').replaceChildren(a); }
+if (data.socialLinks.length) { const holder = document.querySelector('#show-empty .muted'); holder.replaceChildren(); for (const social of data.socialLinks) { const href = safeURL(social.url); if (!href) continue; const a = el('a', social.label + ' ↗ ', 'text-link'); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; holder.append(a, document.createTextNode('  ')); } }
+document.querySelector('#year').textContent = new Date().getFullYear();
+document.querySelector('#print-epk').addEventListener('click', () => window.print());
+document.querySelector('#epk-download').addEventListener('click', () => { const text = `MODERN WOMAN\nThe All-Female Billy Joel Tribute Experience\n\nBased in Durham, North Carolina\n\nModern Woman rocks out in tribute to one of the world's biggest, most relevant, highest quality, and most beloved music acts. Get ready to sing and dance to some of the best and most familiar tunes in pop and rock history, in a fun, energetic, and unique tribute show!\n\nModern Woman is comprised of award-winning and multiple award-nominated musicians:\n\n${data.members.map(m => `${m.name} (${m.instruments})`).join('\n')}\n\nLIVE PERFORMANCE\nhttps://www.youtube.com/shorts/EK04auxdaaU\n\nBOOKING\n${data.bookingEmail || 'Booking contact details coming soon.'}\n\nOfficial promotional photography and additional EPK materials coming soon.\n`; const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' })); const a = el('a'); a.href = url; a.download = 'Modern-Woman-Band-Overview.txt'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); });
